@@ -38,7 +38,29 @@ const userSchema = new mongoose.Schema({
     city: String, // <--- OPTIONAL: Add city
     state: String, // <--- OPTIONAL: Add state
     country: String, // <--- OPTIONAL: Add country
-    profilePicture: String // <--- OPTIONAL: If you save base64 string or URL
+    profilePicture: String, // <--- OPTIONAL: If you save base64 string or URL
+    preferences: {
+        topics: [String],
+        answered: [
+            {
+                q: String,
+                a: String
+            }
+        ]
+    },
+    search_history: [
+        {
+            query: String,
+            timestamp: { type: Date, default: Date.now }
+        }
+    ],
+    interactions: [
+        {
+            item_id: String,
+            type: String,
+            duration: Number
+        }
+    ]
 });
 
 module.exports = mongoose.model('User', userSchema);
