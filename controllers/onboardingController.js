@@ -1,8 +1,9 @@
 // middleware/auth.js
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-const UserAnswers = require('../models/UserAnswers');
+// const UserAnswers = require('../models/UserAnswers'); // Not used in this controller
 
+// Middleware to protect routes (if needed)
 const protect = (req, res, next) => {
     let token;
 
@@ -19,29 +20,45 @@ const protect = (req, res, next) => {
             next(); // Proceed to the next middleware/route handler
         } catch (error) {
             console.error('Auth middleware error:', error);
-            res.status(401).json({ message: 'Not authorized, token failed' });
+            return res.status(401).json({ message: 'Not authorized, token failed' });
         }
     }
 
     if (!token) {
-        res.status(401).json({ message: 'Not authorized, no token' });
+        return res.status(401).json({ message: 'Not authorized, no token' });
     }
 };
 
-const saveOnboardingAnswers = async (req, res) => {
-  const { userId, interests } = req.body;
-  if (!userId || !interests) return res.status(400).json({ error: 'Missing data' });
+// Controller to save onboarding answers
+const saveAnswers = async (req, res) => {
   try {
-    await User.findByIdAndUpdate(
+    console.log('Received body:', req.body);
+
+    const { userId, interests } = req.body;
+    // Log the extracted data
+    console.log('userId:', userId);
+    console.log('interests:', interests);
+
+    // Update the user's interests
+    const user = await User.findByIdAndUpdate(
       userId,
-      { $set: { interests } }
+      { interests },
+      { new: true }
     );
-    res.json({ success: true, message: 'Interests saved to user profile!' });
+
+    if (!user) {
+      console.error('User not found for ID:', userId);
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
+
+    res.json({ success: true, user });
   } catch (err) {
-    res.status(500).json({ error: 'Server error' });
+    console.error('Error saving onboarding answers:', err); // Log the error
+    res.status(500).json({ success: false, error: 'Server error' });
   }
 };
 
 module.exports = {
-    saveOnboardingAnswers
+    saveAnswers,
+    protect
 };
