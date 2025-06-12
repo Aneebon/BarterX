@@ -1,9 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const { saveOnboardingAnswers } = require('../controllers/onboardingController');
+const { saveAnswers } = require('../controllers/onboardingController');
 
-router.post('/save-answers', saveOnboardingAnswers);
+// POST route to save onboarding answers
+router.post('/save-answers', saveAnswers);
 
+// GET route to fetch user by email
 router.get('/user-by-email', async (req, res) => {
   const { email } = req.query;
   if (!email) return res.status(400).json({ error: 'Missing email' });
