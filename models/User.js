@@ -1,5 +1,6 @@
 // models/User.js
 const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs'); // Import bcrypt for password hashing
 
 const userSchema = new mongoose.Schema({
     name: {
@@ -21,33 +22,33 @@ const userSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    // This is the new, structured interests array for survey answers
     interests: {
-        type: [String], // Array of strings for interests
+        type: [{
+            question: { type: String, required: true },
+            // Use mongoose.Schema.Types.Mixed for 'answer' as it can be a string or an array
+            answer: { type: mongoose.Schema.Types.Mixed, required: true }
+        }],
         default: []
     },
-    modes: { // <--- ADD THIS FIELD for exchange modes
+    modes: {
         type: [String],
         default: []
     },
-    userType: { // <--- OPTIONAL: Add user type (individual/seller)
+    userType: {
         type: String,
         enum: ['individual', 'seller'],
         default: 'individual'
     },
-    contactNumber: String, // <--- OPTIONAL: Add contact number
-    city: String, // <--- OPTIONAL: Add city
-    state: String, // <--- OPTIONAL: Add state
-    country: String, // <--- OPTIONAL: Add country
-    profilePicture: String, // <--- OPTIONAL: If you save base64 string or URL
-    preferences: {
-        topics: [String],
-        answered: [
-            {
-                q: String,
-                a: String
-            }
-        ]
-    },
+    contactNumber: String,
+    city: String,
+    state: String,
+    country: String,
+    profilePicture: String,
+    // Fields for password reset functionality (from your server.js logic)
+    resetPasswordToken: String,
+    resetPasswordExpires: Date,
+    // Optional: Fields for search history and interactions if you plan to track them
     search_history: [
         {
             query: String,
@@ -57,10 +58,18 @@ const userSchema = new mongoose.Schema({
     interactions: [
         {
             item_id: String,
-            type: String,
-            duration: Number
+            type: String, // e.g., "click", "view", "like"
+            duration: Number // e.g., in seconds
         }
     ]
+}, { timestamps: true }); // Automatically adds createdAt and updatedAt fields
+
+// Pre-save hook to hash password before saving (if it's modified)
+userSchema.pre('save', async function(next) {
+    if (this.isModified('password')) {
+        this.password = await bcrypt.hash(this.password, 10);
+    }
+    next();
 });
 
 module.exports = mongoose.model('User', userSchema);
